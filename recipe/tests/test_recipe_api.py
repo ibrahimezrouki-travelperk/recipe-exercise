@@ -6,6 +6,14 @@ from recipe.models import Recipe, Ingredient
 from recipe.serializers import RecipeSerializer
 
 
+def get_recipe_list_url():
+    return reverse('recipe:recipe-list')
+
+
+def get_recipe_detail_url(recipe_id):
+    return reverse('recipe:recipe-detail', args=[recipe_id])
+
+
 class RecipeApiTests(TestCase):
     def setUp(self) -> None:
         self.client = APIClient()
@@ -19,8 +27,7 @@ class RecipeApiTests(TestCase):
                 {'name': 'no pineapple'}
             ]
         }
-        url = reverse('recipe:recipe-list')
-        response = self.client.post(url, data=data, format='json')
+        response = self.client.post(get_recipe_list_url(), data=data, format='json')
         self.assertEqual(response.status_code, 201)
         recipe = Recipe.objects.get(name='Pizza')
         self.assertEqual(recipe.ingredients.count(), 2)
@@ -30,17 +37,15 @@ class RecipeApiTests(TestCase):
             'name': 'Pizza',
             'description': 'something about an oven',
         }
-        url = reverse('recipe:recipe-list')
-        response = self.client.post(url, data=data, format='json')
+        response = self.client.post(get_recipe_list_url(), data=data, format='json')
         self.assertEqual(response.status_code, 201)
         recipe = Recipe.objects.get(name='Pizza')
         self.assertEqual(recipe.ingredients.count(), 0)
 
     def test_all_recipes_retrieve(self):
-        url = reverse('recipe:recipe-list')
         recipe = Recipe.objects.create(name='A recipe name', description='Some descriptive description')
         recipe_two = Recipe.objects.create(name='Another recipe', description='Some descriptive description')
-        response = self.client.get(url)
+        response = self.client.get(get_recipe_list_url())
 
         serialized_recipe = RecipeSerializer(recipe)
         serialized_recipe_two = RecipeSerializer(recipe_two)
@@ -49,11 +54,10 @@ class RecipeApiTests(TestCase):
         self.assertIn(serialized_recipe_two.data, response.data)
 
     def test_recipe_retrieve_with_filter(self):
-        url = reverse('recipe:recipe-list')
         recipe = Recipe.objects.create(name='A recipe name', description='Some descriptive description')
         recipe_two = Recipe.objects.create(name='Another recipe', description='Some descriptive description')
         antagonist_recipe = Recipe.objects.create(name='What is this', description='Some descriptive description')
-        response = self.client.get(url, {'name': 'recip'})
+        response = self.client.get(get_recipe_list_url(), {'name': 'recip'})
 
         serialized_recipe = RecipeSerializer(recipe)
         serialized_recipe_two = RecipeSerializer(recipe_two)
@@ -65,16 +69,14 @@ class RecipeApiTests(TestCase):
 
     def test_recipe_retrieve(self):
         recipe = Recipe.objects.create(name='A recipe name', description='Some descriptive description')
-        url = reverse('recipe:recipe-detail', args=[recipe.id])
-        response = self.client.get(url)
+        response = self.client.get(get_recipe_detail_url(recipe.id))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['name'], 'A recipe name')
 
     def test_recipe_partial_update(self):
         recipe = Recipe.objects.create(name='A recipe name', description='Some descriptive description')
         data = {'name': 'Pizza'}
-        url = reverse('recipe:recipe-detail', args=[recipe.id])
-        response = self.client.patch(url, data)
+        response = self.client.patch(get_recipe_detail_url(recipe.id), data)
         recipe.refresh_from_db()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(recipe.name, 'Pizza')
@@ -86,8 +88,7 @@ class RecipeApiTests(TestCase):
         }
         ingredient = Ingredient.objects.create(recipe=recipe, **ingredient_data)
         new_data = {'name': 'Pizza', 'description': 'oven stuff'}
-        url = reverse('recipe:recipe-detail', args=[recipe.id])
-        response = self.client.put(url, new_data)
+        response = self.client.put(get_recipe_detail_url(recipe.id), new_data)
         recipe.refresh_from_db()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(recipe.name, new_data['name'])
@@ -123,8 +124,7 @@ class RecipeApiTests(TestCase):
         }
         ingredient = Ingredient.objects.create(recipe=recipe, **ingredient_data)
         new_data = {'origins': 'mars'}
-        url = reverse('recipe:recipe-detail', args=[recipe.id])
-        response = self.client.put(url, new_data)
+        response = self.client.put(get_recipe_detail_url(recipe.id), new_data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_recipe_delete(self):
@@ -133,8 +133,7 @@ class RecipeApiTests(TestCase):
             'name': 'cheese'
         }
         ingredient = Ingredient.objects.create(recipe=recipe, **ingredient_data)
-        url = reverse('recipe:recipe-detail', args=[recipe.id])
-        response = self.client.delete(url)
+        response = self.client.delete(get_recipe_detail_url(recipe.id))
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(Recipe.objects.all().count(), 0)
