@@ -1,0 +1,39 @@
+fail_fast: false
+repos:
+  - repo: local
+    hooks:
+      - id: gitleaks
+        name: gitleaks
+        description: Detect hardcoded secrets powered by Gitleaks.
+        language: script
+        entry: pre-commit-hooks/security/secrets/gitleaks.sh
+        verbose: True
+        pass_filenames: False
+      - id: trivy
+        name: trivy
+        description: Python package vulnerability scanner powered by trivy.
+        language: script
+        entry: pre-commit-hooks/security/SCA/trivy.sh
+        verbose: True
+        pass_filenames: False
+      - id: pip-licenses
+        name: pip-licenses
+        description: Python package license scanner powered by pip-licenses.
+        language: script
+        entry: pre-commit-hooks/security/SCA/licenses.sh
+        verbose: True
+        pass_filenames: False
+      - id: trivy-container
+        name: trivy-container
+        description: Detect Dockerfile security missconfigurations powered by trivy.
+        language: script
+        entry: pre-commit-hooks/security/SAST/trivy.sh
+        verbose: True
+        pass_filenames: False
+      - id: semgrep
+        name: semgrep
+        description: Detect code vulnerabilities powered by semgrep.
+        language: script
+        entry: pre-commit-hooks/security/SAST/semgrep.sh
+        verbose: True
+        pass_filenames: False
