@@ -83,10 +83,6 @@ class RecipeApiTests(TestCase):
 
     def test_recipe_update(self):
         recipe = Recipe.objects.create(name='A recipe name', description='Some descriptive description')
-        ingredient_data = {
-            'name': 'cheese'
-        }
-        ingredient = Ingredient.objects.create(recipe=recipe, **ingredient_data)
         new_data = {'name': 'Pizza', 'description': 'oven stuff'}
         response = self.client.put(get_recipe_detail_url(recipe.id), new_data, format='json')
         recipe.refresh_from_db()
@@ -113,20 +109,12 @@ class RecipeApiTests(TestCase):
 
     def test_recipe_invalid_update(self):
         recipe = Recipe.objects.create(name='A recipe name', description='Some descriptive description')
-        ingredient_data = {
-            'name': 'cheese'
-        }
-        ingredient = Ingredient.objects.create(recipe=recipe, **ingredient_data)
         new_data = {'origins': 'mars'}
         response = self.client.put(get_recipe_detail_url(recipe.id), new_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_recipe_delete(self):
         recipe = Recipe.objects.create(name='A recipe name', description='Some descriptive description')
-        ingredient_data = {
-            'name': 'cheese'
-        }
-        ingredient = Ingredient.objects.create(recipe=recipe, **ingredient_data)
         response = self.client.delete(get_recipe_detail_url(recipe.id))
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
