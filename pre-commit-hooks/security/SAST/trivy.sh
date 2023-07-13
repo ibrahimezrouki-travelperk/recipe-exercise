@@ -1,7 +1,7 @@
 #!/bin/bash
 
 docker ps > /dev/null 2>&1
-[[ $? -ne 0 ]] && echo "Docker not available. Start docker daemon" && exit 0
+[[ $? -ne 0 ]] && echo "Docker not available. Start docker daemon" && exit 1
 Dockerfile=$(find . -name '*dockerfile*')
 if [ -n "$Dockerfile" ]; then
   while IFS= read -r file; do
