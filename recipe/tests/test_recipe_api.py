@@ -32,15 +32,13 @@ class RecipeApiTests(TestCase):
         recipe = Recipe.objects.get(name='Pizza')
         self.assertEqual(recipe.ingredients.count(), 2)
 
-    def test_recipe_create_without_ingredients(self):
+    def test_recipe_create_without_ingredients_fails(self):
         data = {
             'name': 'Pizza',
             'description': 'something about an oven',
         }
         response = self.client.post(get_recipe_list_url(), data=data, format='json')
-        self.assertEqual(response.status_code, 201)
-        recipe = Recipe.objects.get(name='Pizza')
-        self.assertEqual(recipe.ingredients.count(), 0)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_all_recipes_retrieve(self):
         recipe = Recipe.objects.create(name='A recipe name', description='Some descriptive description')
@@ -70,26 +68,32 @@ class RecipeApiTests(TestCase):
     def test_recipe_retrieve(self):
         recipe = Recipe.objects.create(name='A recipe name', description='Some descriptive description')
         response = self.client.get(get_recipe_detail_url(recipe.id))
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['name'], 'A recipe name')
 
-    def test_recipe_partial_update(self):
+    def test_recipe_partial_update_without_ingredients_succeeds(self):
         recipe = Recipe.objects.create(name='A recipe name', description='Some descriptive description')
         data = {'name': 'Pizza'}
         response = self.client.patch(get_recipe_detail_url(recipe.id), data, format='json')
         recipe.refresh_from_db()
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(recipe.name, 'Pizza')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(recipe.name, data['name'])
 
-    def test_recipe_update(self):
+    def test_recipe_partial_update_of_ingredients_succeeds(self):
+        recipe = Recipe.objects.create(name='A recipe name', description='Some descriptive description')
+        new_data = {
+            "ingredients": [{"name": "new ingredient"}]
+        }
+        response = self.client.patch(get_recipe_detail_url(recipe.id), new_data, format='json')
+        recipe.refresh_from_db()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(recipe.ingredients.count(), 1)
+
+    def test_recipe_update_fails_with_no_ingredients(self):
         recipe = Recipe.objects.create(name='A recipe name', description='Some descriptive description')
         new_data = {'name': 'Pizza', 'description': 'oven stuff'}
         response = self.client.put(get_recipe_detail_url(recipe.id), new_data, format='json')
-        recipe.refresh_from_db()
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(recipe.name, new_data['name'])
-        self.assertEqual(recipe.description, new_data['description'])
-        self.assertEqual(recipe.ingredients.count(), 0)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_recipe_update_including_ingredients(self):
         recipe = Recipe.objects.create(name='A recipe name', description='Some descriptive description')
@@ -102,7 +106,7 @@ class RecipeApiTests(TestCase):
         response = self.client.put(url, new_data, format='json')
         recipe.refresh_from_db()
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(recipe.name, new_data['name'])
         self.assertEqual(recipe.description, new_data['description'])
         self.assertEqual(recipe.ingredients.count(), 1)

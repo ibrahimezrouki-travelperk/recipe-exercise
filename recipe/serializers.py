@@ -20,6 +20,9 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         ingredients_data = validated_data.pop('ingredients', [])
+        # could do validate this way, but I wonder if utilizing validate method is more 'pythonic'
+        # if not ingredients_data:
+        #     raise ValidationError("A recipe needs at least one ingredient")
         recipe = Recipe.objects.create(**validated_data)
         for ingredient in ingredients_data:
             Ingredient.objects.create(recipe=recipe, **ingredient)
@@ -32,3 +35,12 @@ class RecipeSerializer(serializers.ModelSerializer):
         for ingredient in ingredients_data:
             Ingredient.objects.create(recipe=instance, **ingredient)
         return instance
+
+    def validate(self, attrs):
+        ingredients = attrs.get('ingredients', [])
+        if not ingredients and self.context['request'].method == 'PUT':
+            raise ValidationError("A recipe needs at least one ingredient")
+        if not ingredients and self.context['request'].method == 'POST':
+            raise ValidationError("A recipe needs at least one ingredient")
+        return attrs
+
