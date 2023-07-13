@@ -76,7 +76,7 @@ class RecipeApiTests(TestCase):
     def test_recipe_partial_update(self):
         recipe = Recipe.objects.create(name='A recipe name', description='Some descriptive description')
         data = {'name': 'Pizza'}
-        response = self.client.patch(get_recipe_detail_url(recipe.id), data)
+        response = self.client.patch(get_recipe_detail_url(recipe.id), data, format='json')
         recipe.refresh_from_db()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(recipe.name, 'Pizza')
@@ -88,34 +88,28 @@ class RecipeApiTests(TestCase):
         }
         ingredient = Ingredient.objects.create(recipe=recipe, **ingredient_data)
         new_data = {'name': 'Pizza', 'description': 'oven stuff'}
-        response = self.client.put(get_recipe_detail_url(recipe.id), new_data)
+        response = self.client.put(get_recipe_detail_url(recipe.id), new_data, format='json')
         recipe.refresh_from_db()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(recipe.name, new_data['name'])
         self.assertEqual(recipe.description, new_data['description'])
         self.assertEqual(recipe.ingredients.count(), 0)
 
-    # TODO: This test fails and I dont know why.
-    #  It seems validated_data does not have an ingredients key. so we update a recipe and give it no ingredients
-    #  This however does work when manually testing. Ask team for some clarification
-    # def test_recipe_update_including_ingredients(self):
-    #     recipe = Recipe.objects.create(name='A recipe name', description='Some descriptive description')
-    #     ingredient_data = {'name': 'cheese'}
-    #
-    #     ingredient = Ingredient.objects.create(recipe=recipe, **ingredient_data)
-    #     new_data = {
-    #         "name": "new name",
-    #         "description": "new description",
-    #         "ingredients": [{"name": "new ingredient"}]
-    #     }
-    #     url = reverse('recipe:recipe-detail', args=[recipe.id])
-    #     response = self.client.put(url, new_data)
-    #     recipe.refresh_from_db()
-    #
-    #     self.assertEqual(response.status_code, 200)
-    #     self.assertEqual(recipe.name, new_data['name'])
-    #     self.assertEqual(recipe.description, new_data['description'])
-    #     self.assertEqual(recipe.ingredients.count(), 1)
+    def test_recipe_update_including_ingredients(self):
+        recipe = Recipe.objects.create(name='A recipe name', description='Some descriptive description')
+        new_data = {
+            "name": "new name",
+            "description": "new description",
+            "ingredients": [{"name": "new ingredient"}]
+        }
+        url = reverse('recipe:recipe-detail', args=[recipe.id])
+        response = self.client.put(url, new_data, format='json')
+        recipe.refresh_from_db()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(recipe.name, new_data['name'])
+        self.assertEqual(recipe.description, new_data['description'])
+        self.assertEqual(recipe.ingredients.count(), 1)
 
     def test_recipe_invalid_update(self):
         recipe = Recipe.objects.create(name='A recipe name', description='Some descriptive description')
@@ -124,7 +118,7 @@ class RecipeApiTests(TestCase):
         }
         ingredient = Ingredient.objects.create(recipe=recipe, **ingredient_data)
         new_data = {'origins': 'mars'}
-        response = self.client.put(get_recipe_detail_url(recipe.id), new_data)
+        response = self.client.put(get_recipe_detail_url(recipe.id), new_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_recipe_delete(self):
