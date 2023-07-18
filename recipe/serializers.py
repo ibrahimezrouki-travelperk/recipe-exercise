@@ -30,10 +30,13 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         ingredients_data = validated_data.pop('ingredients', [])
-        instance = super().update(instance, validated_data)
+        # if not ingredients_data:
+        #     raise ValidationError("A recipe needs at least one ingredient")
         instance.ingredients.all().delete()
         for ingredient in ingredients_data:
             Ingredient.objects.create(recipe=instance, **ingredient)
+
+        instance = super().update(instance, validated_data)
         return instance
 
     def validate(self, attrs):

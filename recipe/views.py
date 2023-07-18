@@ -12,7 +12,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     serializer_class = RecipeSerializer
 
     def get_queryset(self):
-        queryset = self.queryset
+        queryset = self.queryset.all()
         recipe_name = self.request.query_params.get("name")
 
         if recipe_name is not None:
